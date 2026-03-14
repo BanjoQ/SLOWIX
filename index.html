@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SLOWIX" />
+  <meta name="theme-color" content="#0f1115" />
+  <meta name="description" content="Suivi quotidien des injections d'insuline lente Toujeo" />
+  <title>SLOWIX</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+
+<style>
+/* ============================================================
+   SLOWIX — Dark Mode Modern Health App
+   ============================================================ */
+
+:root {
+  --bg:       #0f1115;
+  --bg2:      #161920;
+  --card:     #1a1e27;
+  --card2:    #1f2433;
+  --border:   rgba(255,255,255,0.07);
+  --border2:  rgba(77,163,255,0.3);
+
+  --green:    #00d084;
+  --green-d:  rgba(0,208,132,0.14);
+  --green-g:  rgba(0,208,132,0.4);
+  --red:      #ff4d4f;
+  --red-d:    rgba(255,77,79,0.12);
+  --blue:     #4da3ff;
+  --blue-d:   rgba(77,163,255,0.12);
+  --blue-g:   rgba(77,163,255,0.35);
+  --yellow:   #ffb400;
+
+  --t1: #f0f2f8;
+  --t2: #8891a8;
+  --t3: #505870;
+
+  --r-sm: 10px; --r-md: 16px; --r-lg: 22px; --r-xl: 28px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.35);
+  --ease: 0.2s cubic-bezier(0.4,0,0.2,1);
+  --bounce: 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  --mono: 'Space Mono', monospace;
+  --sans: 'DM Sans', system-ui, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--t1);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-x: hidden;
+  line-height: 1.5;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(77,163,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 120%, rgba(0,208,132,0.06) 0%, transparent 60%);
+  pointer-events: none; z-index: 0;
+}
+
+#app {
+  position: relative; z-index: 1;
+  max-width: 480px; margin: 0 auto;
+  padding: 0 0 100px;
+}
+
+/* ---- Header ---- */
+.header {
+  padding: 52px 20px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+@supports (padding-top: env(safe-area-inset-top)) {
+  .header { padding-top: calc(env(safe-area-inset-top) + 20px); }
+}
+
+.header-brand { display: flex; align-items: center; gap: 12px; }
+
+.header-logo { width: 36px; height: 36px; flex-shrink: 0; }
+
+.header-title {
+  font-family: var(--mono); font-size: 1.45rem; font-weight: 700;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, var(--blue) 0%, var(--green) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text; line-height: 1.1;
+}
+
+.header-sub {
+  font-size: 0.7rem; color: var(--t3);
+  letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; margin-top: 2px;
+}
+
+.btn-icon-hdr {
+  width: 40px; height: 40px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--card);
+  color: var(--t2); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 1rem; transition: var(--ease); flex-shrink: 0;
+}
+.btn-icon-hdr:active { transform: scale(0.92); background: var(--card2); }
+
+/* ---- Nav ---- */
+.nav-tabs {
+  display: flex; gap: 6px; padding: 0 20px 16px;
+}
+.nav-tab {
+  flex: 1; padding: 9px 8px; border-radius: 10px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--t3); font-family: var(--sans); font-size: 0.8rem; font-weight: 500;
+  cursor: pointer; transition: var(--ease); text-align: center;
+}
+.nav-tab.active { background: var(--card); border-color: rgba(77,163,255,0.25); color: var(--blue); }
+.nav-tab:active { transform: scale(0.96); }
+
+/* ---- Views ---- */
+.view { display: none; padding: 0 20px; animation: fadeIn 0.25s ease forwards; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 20px; margin-bottom: 14px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--t3); margin-bottom: 14px;
+}
+
+/* ---- Status card ---- */
+.status-card { border-radius: var(--r-xl); padding: 22px 20px; position: relative; overflow: hidden; transition: var(--ease); }
+.status-card.done   { background: var(--green-d); border-color: rgba(0,208,132,0.2); box-shadow: 0 0 30px rgba(0,208,132,0.15); }
+.status-card.pending { background: var(--red-d); border-color: rgba(255,77,79,0.2); }
+.status-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg,rgba(255,255,255,0.02) 0%,transparent 60%); pointer-events: none; }
+
+.status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+
+.dot {
+  width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+}
+.dot.done    { background: var(--green); animation: pgn 2.5s infinite; }
+.dot.pending { background: var(--red);  animation: prn 2.5s infinite; }
+@keyframes pgn { 0%,100%{box-shadow:0 0 6px var(--green-g)} 50%{box-shadow:0 0 16px var(--green-g),0 0 30px rgba(0,208,132,0.2)} }
+@keyframes prn { 0%,100%{box-shadow:0 0 6px rgba(255,77,79,.5)} 50%{box-shadow:0 0 16px rgba(255,77,79,.7)} }
+
+.status-title { font-size: 1rem; font-weight: 600; color: var(--t1); }
+
+.status-badges { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.sbadge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 10px; border-radius: 8px; font-size: 0.78rem; font-weight: 500;
+  background: rgba(255,255,255,0.06); color: var(--t2);
+}
+.status-comment {
+  margin-top: 10px; font-size: 0.8rem; color: var(--t2); font-style: italic;
+  padding: 8px 12px; background: rgba(255,255,255,0.04);
+  border-radius: 8px; border-left: 2px solid var(--border);
+}
+
+/* ---- Late alert ---- */
+.late-alert {
+  display: none; align-items: center; gap: 10px;
+  padding: 12px 16px; background: rgba(255,180,0,0.1);
+  border: 1px solid rgba(255,180,0,0.25); border-radius: var(--r-md);
+  margin-bottom: 14px; color: var(--yellow); font-size: 0.82rem; font-weight: 500;
+}
+.late-alert.show { display: flex; animation: fadeIn 0.4s ease; }
+
+/* ---- Target time bar ---- */
+.target-time {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: var(--r-md); margin-bottom: 14px;
+}
+.target-time-label { font-size: 0.78rem; color: var(--t3); font-weight: 500; }
+.target-time-val   { font-family: var(--mono); font-size: 0.9rem; color: var(--blue); font-weight: 700; }
+
+/* ---- Inputs ---- */
+.input-group  { margin-bottom: 14px; }
+.input-label  { display: block; font-size: 0.76rem; font-weight: 600; color: var(--t2); margin-bottom: 7px; letter-spacing: 0.04em; text-transform: uppercase; }
+
+.dose-stepper {
+  display: flex; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden;
+}
+.dose-btn {
+  width: 50px; height: 54px; border: none; background: transparent;
+  color: var(--blue); font-size: 1.5rem; cursor: pointer; display: flex;
+  align-items: center; justify-content: center; transition: var(--ease); flex-shrink: 0;
+}
+.dose-btn:active { background: rgba(77,163,255,0.1); transform: scale(0.88); }
+
+.dose-val {
+  flex: 1; text-align: center; font-family: var(--mono); font-size: 1.7rem;
+  font-weight: 700; color: var(--blue); background: transparent; border: none;
+  outline: none; letter-spacing: 0.04em; padding: 0;
+  -webkit-appearance: none; -moz-appearance: textfield;
+}
+.dose-val::-webkit-inner-spin-button,
+.dose-val::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+.dose-unit { font-size: 0.7rem; color: var(--t3); padding-right: 14px; font-weight: 500; }
+
+.txt-input {
+  width: 100%; padding: 14px 16px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-md); color: var(--t1);
+  font-family: var(--sans); font-size: 0.9rem;
+  outline: none; transition: var(--ease); resize: none;
+}
+.txt-input::placeholder { color: var(--t3); }
+.txt-input:focus { border-color: var(--border2); background: var(--card2); box-shadow: 0 0 0 3px rgba(77,163,255,0.08); }
+
+/* ---- Primary button ---- */
+.btn-primary {
+  width: 100%; padding: 18px 24px; border: none;
+  border-radius: var(--r-lg);
+  background: linear-gradient(135deg, var(--blue) 0%, var(--green) 100%);
+  color: #fff; font-family: var(--sans); font-size: 1rem; font-weight: 700;
+  letter-spacing: 0.03em; cursor: pointer; position: relative; overflow: hidden;
+  transition: var(--bounce); box-shadow: 0 4px 20px rgba(77,163,255,0.3);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary::before { content: ''; position: absolute; inset: 0; background: rgba(255,255,255,0.1); opacity: 0; transition: opacity 0.2s; }
+.btn-primary:active::before { opacity: 1; }
+.btn-primary.success { background: linear-gradient(135deg,var(--green) 0%,#00a869 100%); box-shadow: 0 4px 24px var(--green-g); animation: spop .4s var(--bounce); }
+@keyframes spop { 0%{transform:scale(1)} 40%{transform:scale(1.04)} 100%{transform:scale(1)} }
+
+.ripple {
+  position: absolute; border-radius: 50%;
+  background: rgba(255,255,255,0.25); transform: scale(0);
+  animation: rpl 0.5s linear; pointer-events: none;
+}
+@keyframes rpl { to { transform: scale(4); opacity: 0; } }
+
+/* ---- Secondary buttons ---- */
+.btn-sec {
+  padding: 10px 18px; border-radius: var(--r-sm);
+  border: 1px solid var(--border); background: var(--bg2);
+  color: var(--t2); font-family: var(--sans); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: var(--ease);
+}
+.btn-sec:active { transform: scale(0.96); border-color: var(--blue); color: var(--blue); }
+.btn-sec.danger { border-color: rgba(255,77,79,0.3); color: var(--red); }
+
+/* ---- History ---- */
+.hist-group { margin-bottom: 16px; }
+.hist-date  { font-size: 0.7rem; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 4px; margin-bottom: 8px; }
+
+.hist-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-md); padding: 14px 16px; margin-bottom: 8px; transition: var(--ease);
+}
+.hist-item.done    { border-left: 3px solid var(--green); }
+.hist-item.pending { border-left: 3px solid var(--red); opacity: 0.7; }
+
+.hist-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.hist-status { display: inline-flex; align-items: center; gap: 5px; font-size: 0.78rem; font-weight: 600; }
+.hist-status.done    { color: var(--green); }
+.hist-status.pending { color: var(--red); }
+
+.btn-edit {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid var(--border); background: transparent;
+  color: var(--t3); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 0.85rem; transition: var(--ease);
+}
+.btn-edit:active { transform: scale(0.9); border-color: var(--blue); color: var(--blue); }
+
+.hist-pills { display: flex; flex-wrap: wrap; gap: 8px; font-size: 0.8rem; color: var(--t2); }
+.pill { padding: 3px 9px; border-radius: 6px; background: rgba(255,255,255,0.05); font-size: 0.76rem; }
+.hist-comment { margin-top: 8px; font-size: 0.78rem; color: var(--t3); font-style: italic; }
+
+.mod-log { margin-top: 10px; padding: 8px 10px; background: rgba(77,163,255,0.06); border-radius: 8px; border: 1px solid rgba(77,163,255,0.1); }
+.mod-log-title { font-size: 0.68rem; color: var(--blue); font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+.mod-log-body  { font-size: 0.74rem; color: var(--t3); line-height: 1.6; font-family: var(--mono); }
+
+.hist-empty { text-align: center; padding: 48px 20px; color: var(--t3); }
+.hist-empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
+.hist-empty-text { font-size: 0.88rem; }
+
+/* ---- Stats ---- */
+.streak-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+.streak-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--r-md); padding: 14px 12px; text-align: center; }
+.streak-val  { font-family: var(--mono); font-size: 1.8rem; font-weight: 700; color: var(--blue); line-height: 1; margin-bottom: 4px; }
+.streak-val.g { color: var(--green); }
+.streak-lbl  { font-size: 0.67rem; color: var(--t3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+
+/* ---- Settings ---- */
+.set-section { font-size: 0.7rem; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px; padding: 0 4px; }
+.set-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px; background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--r-md); margin-bottom: 8px; cursor: pointer; transition: var(--ease);
+}
+.set-item:active { background: var(--card2); }
+.set-label   { font-size: 0.88rem; font-weight: 500; color: var(--t1); }
+.set-sublabel { font-size: 0.74rem; color: var(--t3); margin-top: 2px; }
+.set-val     { font-family: var(--mono); font-size: 1rem; color: var(--blue); font-weight: 700; }
+
+/* ---- Modal ---- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  z-index: 100; display: flex; align-items: flex-end; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  width: 100%; max-width: 480px;
+  background: var(--bg2); border-radius: var(--r-xl) var(--r-xl) 0 0;
+  border: 1px solid var(--border); border-bottom: none;
+  padding: 24px 20px 44px;
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-handle { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 20px; }
+.modal-title    { font-size: 1.05rem; font-weight: 700; color: var(--t1); margin-bottom: 4px; }
+.modal-subtitle { font-size: 0.8rem; color: var(--t3); margin-bottom: 20px; }
+.modal-actions  { display: flex; gap: 10px; margin-top: 18px; }
+.modal-actions .btn-primary { flex: 1; }
+.modal-actions .btn-sec     { flex: 0 0 auto; padding: 14px 18px; }
+
+/* ---- Toasts ---- */
+.toast-wrap {
+  position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+  z-index: 200; display: flex; flex-direction: column; gap: 8px;
+  pointer-events: none; width: calc(100% - 40px); max-width: 400px;
+}
+.toast {
+  padding: 12px 16px; border-radius: var(--r-md); font-size: 0.85rem; font-weight: 500;
+  display: flex; align-items: center; gap: 10px;
+  animation: tin 0.35s var(--bounce) forwards; pointer-events: all;
+}
+.toast.ok   { background: var(--green-d); border: 1px solid rgba(0,208,132,0.3); color: var(--green); }
+.toast.err  { background: var(--red-d);   border: 1px solid rgba(255,77,79,0.3);  color: var(--red); }
+.toast.info { background: var(--blue-d);  border: 1px solid rgba(77,163,255,0.3); color: var(--blue); }
+.toast.out  { animation: tout 0.25s ease forwards; }
+@keyframes tin  { from{opacity:0;transform:translateY(-16px) scale(0.95)} to{opacity:1;transform:translateY(0) scale(1)} }
+@keyframes tout { from{opacity:1;transform:translateY(0)} to{opacity:0;transform:translateY(-10px)} }
+
+/* ---- Success flash ---- */
+.flash-overlay {
+  position: fixed; inset: 0; background: rgba(0,208,132,0.12);
+  z-index: 150; pointer-events: none; opacity: 0;
+}
+.flash-overlay.go { animation: sflash 0.7s ease forwards; }
+@keyframes sflash { 0%{opacity:0} 30%{opacity:1} 100%{opacity:0} }
+
+/* ---- Diff box in confirm modal ---- */
+.diff-box {
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 12px;
+  padding: 14px; margin-bottom: 4px; font-size: 0.82rem; color: var(--t2);
+}
+.diff-row { margin-bottom: 6px; }
+.diff-row:last-child { margin-bottom: 0; }
+
+/* ---- Yesterday card ---- */
+.yesterday-card { border-top: 1px solid var(--border); }
+.ybadge {
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 10px;border-radius:20px;font-size:0.73rem;font-weight:600;
+}
+.ybadge.done    { background:rgba(0,208,132,0.12);color:var(--green); }
+.ybadge.pending { background:rgba(255,77,79,0.1);  color:var(--red); }
+.ybadge.none    { background:rgba(255,255,255,0.05);color:var(--t3); }
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="flash-overlay" class="flash-overlay"></div>
+<div id="toast-wrap" class="toast-wrap"></div>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-brand">
+      <!-- Logo SVG inline -->
+      <svg class="header-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="lg1" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#4da3ff"/>
+            <stop offset="100%" style="stop-color:#00d084"/>
+          </linearGradient>
+          <filter id="glo"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g filter="url(#glo)">
+          <path d="M 70 55 C 45 55,40 70,55 82 C 68 92,132 98,145 112 C 158 126,155 145,130 145 L 85 145"
+                fill="none" stroke="url(#lg1)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="110" y1="60" x2="155" y2="140" stroke="url(#lg1)" stroke-width="14" stroke-linecap="round"/>
+          <line x1="155" y1="60" x2="110" y2="140" stroke="url(#lg1)" stroke-width="14" stroke-linecap="round"/>
+        </g>
+        <circle cx="100" cy="100" r="5" fill="#00d084" opacity="0.9"/>
+      </svg>
+      <div>
+        <div class="header-title">SLOWIX</div>
+        <div class="header-sub">Suivi insuline Toujeo</div>
+      </div>
+    </div>
+    <button class="btn-icon-hdr" id="hdr-settings-btn" title="Paramètres">⚙</button>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-view="today">Aujourd'hui</button>
+    <button class="nav-tab" data-view="history">Historique</button>
+    <button class="nav-tab" data-view="settings">Paramètres</button>
+  </nav>
+
+  <!-- ===== VUE : AUJOURD'HUI ===== -->
+  <div class="view active" id="view-today">
+
+    <div class="late-alert" id="late-alert">
+      <span>⚠</span>
+      <span>Il est passé 21h — injection non enregistrée !</span>
+    </div>
+
+    <!-- Statut du jour -->
+    <div class="card status-card pending" id="status-card">
+      <div class="card-title">Injection aujourd'hui</div>
+      <div class="status-row">
+        <div class="dot pending" id="status-dot"></div>
+        <div class="status-title" id="status-title">✗ Injection non faite</div>
+      </div>
+      <div class="status-badges" id="status-detail">
+        <span class="sbadge" style="color:var(--t3)">Heure cible : 20:30</span>
+      </div>
+    </div>
+
+    <!-- Injection de la veille -->
+    <div class="card yesterday-card" id="yesterday-card" style="padding:14px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--t3)">Veille</span>
+        <span id="yesterday-status-badge" class="ybadge"></span>
+      </div>
+      <div id="yesterday-detail" style="margin-top:6px;font-size:0.82rem;color:var(--t2);display:flex;flex-wrap:wrap;gap:8px;align-items:center;"></div>
+    </div>
+
+    <!-- Formulaire saisie -->
+    <div class="card">
+      <div class="card-title">Saisie injection</div>
+
+      <div class="target-time">
+        <span class="target-time-label">⏱ Heure cible</span>
+        <span class="target-time-val" id="target-time-display">20:30</span>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="dose-input">Dose injectée</label>
+        <div class="dose-stepper">
+          <button class="dose-btn" id="dose-minus">−</button>
+          <input type="number" id="dose-input" class="dose-val" value="28" min="1" max="200" inputmode="numeric" />
+          <span class="dose-unit">unités</span>
+          <button class="dose-btn" id="dose-plus">+</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" for="comment-input">Commentaire (facultatif)</label>
+        <textarea id="comment-input" class="txt-input" rows="2" placeholder="RAS, douleur au site, glycémie élevée…" maxlength="200"></textarea>
+      </div>
+
+      <button class="btn-primary" id="validate-btn">
+        <span id="validate-btn-text">💉 Valider l'injection</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== VUE : HISTORIQUE ===== -->
+  <div class="view" id="view-history">
+    <div class="card">
+      <div class="card-title">Statistiques · 60 derniers jours</div>
+      <div class="streak-grid">
+        <div class="streak-item">
+          <div class="streak-val g" id="stat-done">—</div>
+          <div class="streak-lbl">Injections</div>
+        </div>
+        <div class="streak-item">
+          <div class="streak-val" id="stat-streak">—</div>
+          <div class="streak-lbl">Jours consécutifs</div>
+        </div>
+        <div class="streak-item">
+          <div class="streak-val" id="stat-total">—</div>
+          <div class="streak-lbl">Total</div>
+        </div>
+      </div>
+    </div>
+    <div id="history-list"></div>
+  </div>
+
+  <!-- ===== VUE : PARAMÈTRES ===== -->
+  <div class="view" id="view-settings">
+
+    <div class="set-section">Injection</div>
+    <div class="set-item" id="set-dose-btn">
+      <div>
+        <div class="set-label">Dose par défaut</div>
+        <div class="set-sublabel">Valeur pré-remplie à la saisie</div>
+      </div>
+      <div class="set-val" id="set-dose-val">28 unités</div>
+    </div>
+    <div class="set-item" id="set-time-btn">
+      <div>
+        <div class="set-label">Heure cible</div>
+        <div class="set-sublabel">Heure recommandée pour l'injection</div>
+      </div>
+      <div class="set-val" id="set-time-val">20:30</div>
+    </div>
+
+    <div class="set-section" style="margin-top:18px">Données</div>
+    <div class="set-item" id="set-export-btn">
+      <div>
+        <div class="set-label">Exporter les données</div>
+        <div class="set-sublabel">Fichier JSON téléchargeable</div>
+      </div>
+      <span style="color:var(--blue)">↓</span>
+    </div>
+    <div class="set-item" id="set-clear-btn">
+      <div>
+        <div class="set-label" style="color:var(--red)">Effacer toutes les données</div>
+        <div class="set-sublabel">Action irréversible</div>
+      </div>
+      <span style="color:var(--red)">✕</span>
+    </div>
+
+    <div class="set-section" style="margin-top:18px">Application</div>
+    <div class="set-item" style="cursor:default">
+      <div>
+        <div class="set-label">SLOWIX</div>
+        <div class="set-sublabel">Suivi insuline Toujeo · v1.0.0</div>
+      </div>
+      <div style="font-size:0.72rem;color:var(--t3)">PWA</div>
+    </div>
+
+  </div>
+
+</div><!-- /app -->
+
+<!-- ===== MODALS ===== -->
+
+<!-- Confirm modification today -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Modifier l'injection ?</div>
+    <div class="modal-subtitle">Une injection a déjà été enregistrée aujourd'hui.</div>
+    <div class="diff-box">
+      <div class="diff-row">
+        <span style="color:var(--t3)">Dose : </span>
+        <span id="c-old-dose" style="color:var(--red)">—</span>
+        <span style="color:var(--t3)"> → </span>
+        <span id="c-new-dose" style="color:var(--green)">—</span>
+        <span style="color:var(--t3)"> unités</span>
+      </div>
+      <div class="diff-row">
+        <span style="color:var(--t3)">Commentaire : </span>
+        <span id="c-old-cmt" style="color:var(--red)">—</span>
+        <span style="color:var(--t3)"> → </span>
+        <span id="c-new-cmt" style="color:var(--green)">—</span>
+      </div>
+    </div>
+    <div style="font-size:0.74rem;color:var(--t3);margin:10px 0 0">La modification sera journalisée avec horodatage.</div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="confirm-no">Annuler</button>
+      <button class="btn-primary" id="confirm-yes">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit from history -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-title">Modifier l'injection</div>
+    <div class="modal-subtitle" id="edit-sub"></div>
+    <div class="input-group">
+      <label class="input-label">Dose injectée</label>
+      <div class="dose-stepper">
+        <button class="dose-btn" id="edit-dose-minus">−</button>
+        <input type="number" id="edit-dose" class="dose-val" value="28" min="1" max="200" inputmode="numeric" />
+        <span class="dose-unit">unités</span>
+        <button class="dose-btn" id="edit-dose-plus">+</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Commentaire</label>
+      <textarea id="edit-comment" class="txt-input" rows="2" placeholder="Commentaire…" maxlength="200"></textarea>
+    </div>
+    <div style="font-size:0.74rem;color:var(--t3);margin-bottom:4px">⚠ La modification sera enregistrée dans le journal.</div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="edit-cancel">Annuler</button>
+      <button class="btn-primary" id="edit-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Dose default settings -->
+<div class="modal-overlay" id="dose-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Dose par défaut</div>
+    <div class="modal-subtitle">Valeur pré-remplie à chaque saisie.</div>
+    <div class="input-group">
+      <div class="dose-stepper">
+        <button class="dose-btn" id="sdose-minus">−</button>
+        <input type="number" id="sdose-input" class="dose-val" value="28" min="1" max="200" inputmode="numeric" />
+        <span class="dose-unit">unités</span>
+        <button class="dose-btn" id="sdose-plus">+</button>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="dose-modal-cancel">Annuler</button>
+      <button class="btn-primary" id="dose-modal-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Time settings -->
+<div class="modal-overlay" id="time-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Heure cible</div>
+    <div class="modal-subtitle">Heure recommandée pour l'injection quotidienne.</div>
+    <div class="input-group">
+      <input type="time" id="stime-input" class="txt-input" value="20:30" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="time-modal-cancel">Annuler</button>
+      <button class="btn-primary" id="time-modal-save">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Clear data confirm -->
+<div class="modal-overlay" id="clear-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="color:var(--red)">Effacer toutes les données ?</div>
+    <div class="modal-subtitle">Action irréversible. Tout l'historique sera supprimé.</div>
+    <div class="modal-actions">
+      <button class="btn-sec" id="clear-no">Annuler</button>
+      <button class="btn-primary" id="clear-yes" style="background:linear-gradient(135deg,#ff4d4f,#c9291a);box-shadow:0 4px 16px rgba(255,77,79,0.3)">Effacer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SLOWIX — Application Logic (vanilla JS)
+   ============================================================ */
+'use strict';
+
+// ---- Storage keys ----
+const SK = { INJ: 'slwx_inj', SET: 'slwx_set' };
+
+const DEFAULTS = { defaultDose: 28, targetTime: '20:30' };
+
+// ---- App state ----
+const S = {
+  injections: {},
+  settings: { ...DEFAULTS },
+  editingDate: null,
+};
+
+// ---- Persistence ----
+function load() {
+  try {
+    const i = localStorage.getItem(SK.INJ); if (i) S.injections = JSON.parse(i);
+    const s = localStorage.getItem(SK.SET); if (s) S.settings = { ...DEFAULTS, ...JSON.parse(s) };
+  } catch(e) { console.error(e); }
+}
+function saveInj() { try { localStorage.setItem(SK.INJ, JSON.stringify(S.injections)); } catch(e) { toast('Erreur sauvegarde','err'); } }
+function saveSet() { try { localStorage.setItem(SK.SET, JSON.stringify(S.settings)); } catch(e) {} }
+
+// ---- Date helpers ----
+const today   = () => new Date().toISOString().split('T')[0];
+const nowTime = () => new Date().toTimeString().slice(0,5);
+
+function fmtDate(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR',
+    {weekday:'long',day:'numeric',month:'long',year:'numeric'})
+    .replace(/^\w/, c => c.toUpperCase());
+}
+function fmtDateShort(d) {
+  return new Date(d + 'T12:00:00').toLocaleDateString('fr-FR',
+    {day:'numeric',month:'long',year:'numeric'});
+}
+
+function lastNDays(n=60) {
+  return Array.from({length:n},(_,i) => {
+    const d = new Date(); d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  });
+}
+
+function computeStreak() {
+  const t = today();
+  let s = S.injections[t] ? 1 : 0;
+  const days = lastNDays(365);
+  for (const d of days) {
+    if (d === t) continue;
+    if (S.injections[d]) s++;
+    else break;
+  }
+  return s;
+}
+
+// ---- DOM helpers ----
+const $  = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+function toast(msg, type='info', ms=3000) {
+  const w = $('toast-wrap');
+  const t = document.createElement('div');
+  const icons = {ok:'✓', err:'✕', info:'ℹ'};
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span>${icons[type]||'ℹ'}</span><span>${msg}</span>`;
+  w.appendChild(t);
+  setTimeout(() => {
+    t.classList.add('out');
+    setTimeout(() => t.remove(), 300);
+  }, ms);
+}
+
+function openModal(id) {
+  $(id).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+  $(id).classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function flashGreen() {
+  const o = $('flash-overlay');
+  o.classList.remove('go');
+  void o.offsetWidth;
+  o.classList.add('go');
+}
+
+function vibe(p=[50]) { if ('vibrate' in navigator) navigator.vibrate(p); }
+
+function ripple(btn, e) {
+  const r = btn.getBoundingClientRect();
+  const x = (e.clientX||r.left+r.width/2) - r.left;
+  const y = (e.clientY||r.top+r.height/2) - r.top;
+  const s = Math.max(r.width, r.height);
+  const el = document.createElement('span');
+  el.className = 'ripple';
+  el.style.cssText = `left:${x}px;top:${y}px;width:${s}px;height:${s}px;margin-left:-${s/2}px;margin-top:-${s/2}px`;
+  btn.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+function changeDose(inputId, delta) {
+  const el = $(inputId);
+  el.value = Math.max(1, Math.min(200, (parseInt(el.value,10)||0) + delta));
+  vibe([15]);
+}
+
+// ---- Navigation ----
+function switchView(name) {
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $$('.nav-tab').forEach(t => t.classList.remove('active'));
+  $('view-' + name).classList.add('active');
+  document.querySelector(`[data-view="${name}"]`).classList.add('active');
+  if (name === 'history')  renderHistory();
+  if (name === 'settings') renderSettings();
+  if (name === 'today')    renderToday();
+}
+
+// ---- Render: TODAY ----
+function renderToday() {
+  const t  = today();
+  const inj = S.injections[t];
+  const now = nowTime();
+
+  // Late alert
+  const late = $('late-alert');
+  if (now > '21:00' && !inj) late.classList.add('show');
+  else late.classList.remove('show');
+
+  // Status card
+  const card  = $('status-card');
+  const dot   = $('status-dot');
+  const title = $('status-title');
+  const detail= $('status-detail');
+
+  if (inj) {
+    card.className  = 'card status-card done';
+    dot.className   = 'dot done';
+    title.textContent = '✓ Injection faite';
+    let html = `<span class="sbadge">🕐 ${inj.time}</span><span class="sbadge">💉 ${inj.dose} unités</span>`;
+    if (inj.comment) html += `<div class="status-comment">"${escHtml(inj.comment)}"</div>`;
+    detail.innerHTML = html;
+
+    $('validate-btn-text').textContent = '✎ Modifier l\'injection';
+    $('validate-btn').style.background = 'linear-gradient(135deg,#4da3ff 0%,#7b61ff 100%)';
+    $('dose-input').value   = inj.dose;
+    $('comment-input').value= inj.comment || '';
+  } else {
+    card.className  = 'card status-card pending';
+    dot.className   = 'dot pending';
+    title.textContent = '✗ Injection non faite';
+    detail.innerHTML = `<span class="sbadge" style="color:var(--t3)">Heure cible : ${S.settings.targetTime}</span>`;
+
+    $('validate-btn-text').textContent = '💉 Valider l\'injection';
+    $('validate-btn').style.background = '';
+    $('dose-input').value   = S.settings.defaultDose;
+    $('comment-input').value= '';
+  }
+
+  $('target-time-display').textContent = S.settings.targetTime;
+
+  // ---- Injection de la veille ----
+  const yDate = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().split('T')[0]; })();
+  const yInj  = S.injections[yDate];
+  const yBadge  = $('yesterday-status-badge');
+  const yDetail = $('yesterday-detail');
+
+  if (yInj) {
+    yBadge.className = 'ybadge done';
+    yBadge.textContent = '✓ Faite';
+    let yhtml = `<span class="pill">🕐 ${yInj.time}</span><span class="pill">💉 ${yInj.dose} u</span>`;
+    if (yInj.comment) yhtml += `<span style="color:var(--t3);font-style:italic">"${escHtml(yInj.comment)}"</span>`;
+    yDetail.innerHTML = yhtml;
+  } else {
+    yBadge.className = 'ybadge pending';
+    yBadge.textContent = '✗ Non faite';
+    yDetail.innerHTML = `<span style="color:var(--t3);font-size:0.78rem">Aucune injection enregistrée</span>`;
+  }
+}
+
+// ---- Save injection (today) ----
+function saveInjection(confirmed=false) {
+  const t   = today();
+  const old = S.injections[t];
+  const dose= parseInt($('dose-input').value, 10);
+  const cmt = $('comment-input').value.trim();
+
+  if (isNaN(dose) || dose < 1 || dose > 200) { toast('Dose invalide (1–200 u)','err'); return; }
+
+  if (old && !confirmed) {
+    $('c-old-dose').textContent = old.dose;
+    $('c-new-dose').textContent = dose;
+    $('c-old-cmt').textContent  = old.comment || '—';
+    $('c-new-cmt').textContent  = cmt || '—';
+    openModal('confirm-modal');
+    return;
+  }
+
+  const now = nowTime();
+  if (old) {
+    const mods = old.modifications || [];
+    if (old.dose !== dose)           mods.push({type:'dose',   date:t, time:now, oldVal:old.dose,    newVal:dose});
+    if ((old.comment||'') !== cmt)   mods.push({type:'comment',date:t, time:now, oldVal:old.comment||'', newVal:cmt});
+    S.injections[t] = { ...old, dose, comment:cmt, modifications:mods, lastModified:now };
+    toast('Injection modifiée ✓','info');
+  } else {
+    S.injections[t] = { date:t, time:now, dose, comment:cmt, modifications:[] };
+    toast('Injection enregistrée ✓','ok');
+    flashGreen();
+    vibe([50,30,50]);
+    const btn = $('validate-btn');
+    btn.classList.add('success');
+    setTimeout(() => btn.classList.remove('success'), 1500);
+  }
+
+  saveInj();
+  renderToday();
+}
+
+// ---- Render: HISTORY ----
+function renderHistory() {
+  const days  = lastNDays(60);
+  const t     = today();
+
+  $('stat-done').textContent   = days.filter(d => S.injections[d]).length;
+  $('stat-streak').textContent = computeStreak();
+  $('stat-total').textContent  = Object.keys(S.injections).length;
+
+  const list = $('history-list');
+  list.innerHTML = '';
+
+  const hasData = days.some(d => S.injections[d]);
+  if (!hasData) {
+    list.innerHTML = `<div class="hist-empty"><div class="hist-empty-icon">💉</div><div class="hist-empty-text">Aucune injection enregistrée.</div></div>`;
+    return;
+  }
+
+  days.forEach(d => {
+    const inj = S.injections[d];
+    if (!inj && d === t) return;
+    if (!inj && days.indexOf(d) > 7) return;
+
+    const group = document.createElement('div');
+    group.className = 'hist-group';
+    const label = d === t ? 'Aujourd\'hui' : fmtDate(d);
+
+    if (inj) {
+      const mods = inj.modifications || [];
+      let modHtml = '';
+      if (mods.length) {
+        const entries = mods.map(m =>
+          m.type === 'dose'
+            ? `${m.date.split('-').reverse().join('/')} ${m.time} · Dose : ${m.oldVal} → ${m.newVal} u`
+            : `${m.date.split('-').reverse().join('/')} ${m.time} · Commentaire modifié`
+        ).join('<br>');
+        modHtml = `<div class="mod-log"><div class="mod-log-title">✎ Modifications</div><div class="mod-log-body">${entries}</div></div>`;
+      }
+      const cmtHtml = inj.comment ? `<div class="hist-comment">"${escHtml(inj.comment)}"</div>` : '';
+
+      group.innerHTML = `
+        <div class="hist-date">${label}</div>
+        <div class="hist-item done">
+          <div class="hist-hdr">
+            <span class="hist-status done">✓ Injection faite</span>
+            <button class="btn-edit" onclick="openEditModal('${d}')">✎</button>
+          </div>
+          <div class="hist-pills">
+            <span class="pill">🕐 ${inj.time}</span>
+            <span class="pill">💉 ${inj.dose} u</span>
+            ${inj.lastModified ? `<span class="pill" style="color:var(--t3);font-size:.7rem">modifié ${inj.lastModified}</span>` : ''}
+          </div>
+          ${cmtHtml}${modHtml}
+        </div>`;
+    } else {
+      group.innerHTML = `
+        <div class="hist-date">${label}</div>
+        <div class="hist-item pending">
+          <div class="hist-hdr"><span class="hist-status pending">✗ Injection non faite</span></div>
+        </div>`;
+    }
+    list.appendChild(group);
+  });
+}
+
+// ---- Edit modal ----
+function openEditModal(dateStr) {
+  const inj = S.injections[dateStr]; if (!inj) return;
+  S.editingDate = dateStr;
+  $('edit-title').textContent = `Modifier — ${fmtDateShort(dateStr)}`;
+  $('edit-sub').textContent   = `Enregistrée à ${inj.time}`;
+  $('edit-dose').value        = inj.dose;
+  $('edit-comment').value     = inj.comment || '';
+  openModal('edit-modal');
+}
+
+function saveEdit() {
+  const d   = S.editingDate; if (!d) return;
+  const old = S.injections[d]; if (!old) return;
+  const dose= parseInt($('edit-dose').value, 10);
+  const cmt = $('edit-comment').value.trim();
+
+  if (isNaN(dose) || dose < 1 || dose > 200) { toast('Dose invalide','err'); return; }
+
+  const now  = nowTime();
+  const mods = old.modifications || [];
+  if (old.dose !== dose)           mods.push({type:'dose',   date:today(), time:now, oldVal:old.dose,        newVal:dose});
+  if ((old.comment||'') !== cmt)   mods.push({type:'comment',date:today(), time:now, oldVal:old.comment||'', newVal:cmt});
+
+  S.injections[d] = { ...old, dose, comment:cmt, modifications:mods, lastModified:now };
+  saveInj();
+  closeModal('edit-modal');
+  toast('Modification enregistrée ✓','info');
+  vibe([30]);
+  renderHistory();
+  renderToday();
+  S.editingDate = null;
+}
+
+// ---- Render: SETTINGS ----
+function renderSettings() {
+  $('set-dose-val').textContent = `${S.settings.defaultDose} unités`;
+  $('set-time-val').textContent = S.settings.targetTime;
+}
+
+function saveDoseModal() {
+  const d = parseInt($('sdose-input').value,10);
+  if (isNaN(d)||d<1||d>200) { toast('Dose invalide','err'); return; }
+  S.settings.defaultDose = d;
+  saveSet(); renderSettings(); closeModal('dose-modal');
+  toast(`Dose par défaut : ${d} u`,'info');
+  $('dose-input').value = d;
+}
+
+function saveTimeModal() {
+  const t = $('stime-input').value; if (!t) return;
+  S.settings.targetTime = t;
+  saveSet(); renderSettings(); closeModal('time-modal');
+  toast(`Heure cible : ${t}`,'info');
+  $('target-time-display').textContent = t;
+}
+
+// ---- Export ----
+function exportData() {
+  const blob = new Blob([JSON.stringify({version:'1.0.0',exportDate:new Date().toISOString(),injections:S.injections,settings:S.settings},null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `slowix-export-${today()}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Données exportées ✓','ok');
+}
+
+// ---- Security ----
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ---- Init ----
+function init() {
+  load();
+  renderToday();
+
+  // Nav tabs
+  $$('.nav-tab').forEach(t => t.addEventListener('click', () => switchView(t.dataset.view)));
+  $('hdr-settings-btn').addEventListener('click', () => switchView('settings'));
+
+  // Dose steppers
+  $('dose-minus').addEventListener('click', () => changeDose('dose-input', -1));
+  $('dose-plus') .addEventListener('click', () => changeDose('dose-input', +1));
+  $('edit-dose-minus').addEventListener('click', () => changeDose('edit-dose', -1));
+  $('edit-dose-plus') .addEventListener('click', () => changeDose('edit-dose', +1));
+  $('sdose-minus').addEventListener('click', () => changeDose('sdose-input', -1));
+  $('sdose-plus') .addEventListener('click', () => changeDose('sdose-input', +1));
+
+  // Validate
+  $('validate-btn').addEventListener('click', e => { ripple($('validate-btn'), e); saveInjection(false); });
+
+  // Confirm modal
+  $('confirm-yes').addEventListener('click', () => { closeModal('confirm-modal'); saveInjection(true); });
+  $('confirm-no') .addEventListener('click', () => closeModal('confirm-modal'));
+
+  // Edit modal
+  $('edit-save')  .addEventListener('click', saveEdit);
+  $('edit-cancel').addEventListener('click', () => closeModal('edit-modal'));
+
+  // Settings
+  $('set-dose-btn')  .addEventListener('click', () => { $('sdose-input').value = S.settings.defaultDose; openModal('dose-modal'); });
+  $('set-time-btn')  .addEventListener('click', () => { $('stime-input').value = S.settings.targetTime;  openModal('time-modal'); });
+  $('set-export-btn').addEventListener('click', exportData);
+  $('set-clear-btn') .addEventListener('click', () => openModal('clear-modal'));
+
+  $('dose-modal-save')  .addEventListener('click', saveDoseModal);
+  $('dose-modal-cancel').addEventListener('click', () => closeModal('dose-modal'));
+  $('time-modal-save')  .addEventListener('click', saveTimeModal);
+  $('time-modal-cancel').addEventListener('click', () => closeModal('time-modal'));
+
+  $('clear-yes').addEventListener('click', () => {
+    S.injections = {}; saveInj();
+    closeModal('clear-modal');
+    renderToday(); toast('Données effacées','info');
+  });
+  $('clear-no').addEventListener('click', () => closeModal('clear-modal'));
+
+  // Close modals on overlay click
+  $$('.modal-overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
+  });
+
+  // Late alert check every minute
+  setInterval(() => { if (document.getElementById('view-today').classList.contains('active')) renderToday(); }, 60000);
+
+  // Service Worker (inline via blob to avoid external file)
+  registerSW();
+}
+
+function registerSW() {
+  if (!('serviceWorker' in navigator)) return;
+  const swCode = `
+const CV = 'slowix-v1';
+self.addEventListener('install', e => {
+  e.waitUntil(caches.open(CV).then(c => c.addAll(['./'])).then(() => self.skipWaiting()));
+});
+self.addEventListener('activate', e => {
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k=>k!==CV).map(k=>caches.delete(k)))).then(() => self.clients.claim()));
+});
+self.addEventListener('fetch', e => {
+  e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+    if(res&&res.status===200){const cl=res.clone();caches.open(CV).then(c=>c.put(e.request,cl));}
+    return res;
+  }).catch(()=>caches.match('./'))));
+});`;
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const url  = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).catch(() => {});
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
