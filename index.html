@@ -379,6 +379,27 @@ body::before {
 .diff-row { margin-bottom: 6px; }
 .diff-row:last-child { margin-bottom: 0; }
 
+/* ---- Zone selector (Ventre Droit / Gauche) ---- */
+.zone-selector { display: flex; gap: 10px; margin-bottom: 14px; }
+.zone-option {
+  flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 10px; border-radius: var(--r-md);
+  border: 1.5px solid var(--border); background: var(--bg2);
+  cursor: pointer; transition: var(--ease); user-select: none;
+  font-size: 0.85rem; font-weight: 600; color: var(--t2);
+}
+.zone-option input[type="checkbox"] { display: none; }
+.zone-option.selected {
+  border-color: var(--blue); background: var(--blue-d); color: var(--blue);
+}
+.zone-option:active { transform: scale(0.97); }
+.zone-icon { font-size: 1.1rem; }
+
+/* ---- Status card date/time header ---- */
+.status-card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+.status-card-date   { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--t3); }
+.status-card-time   { font-family: var(--mono); font-size: 0.78rem; color: var(--blue); font-weight: 700; }
+
 /* ---- Yesterday card ---- */
 .yesterday-card { border-top: 1px solid var(--border); }
 .ybadge {
@@ -447,7 +468,10 @@ body::before {
 
     <!-- Statut du jour -->
     <div class="card status-card pending" id="status-card">
-      <div class="card-title">Injection aujourd'hui</div>
+      <div class="status-card-header">
+        <span class="status-card-date" id="status-card-date">—</span>
+        <span class="status-card-time" id="status-card-clock">—</span>
+      </div>
       <div class="status-row">
         <div class="dot pending" id="status-dot"></div>
         <div class="status-title" id="status-title">✗ Injection non faite</div>
@@ -482,6 +506,22 @@ body::before {
           <input type="number" id="dose-input" class="dose-val" value="28" min="1" max="200" inputmode="numeric" />
           <span class="dose-unit">unités</span>
           <button class="dose-btn" id="dose-plus">+</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Zone d'injection</label>
+        <div class="zone-selector">
+          <label class="zone-option" id="zone-left-label">
+            <input type="checkbox" id="zone-left" value="gauche" />
+            <span class="zone-icon">◀</span>
+            <span>Ventre Gauche</span>
+          </label>
+          <label class="zone-option" id="zone-right-label">
+            <input type="checkbox" id="zone-right" value="droit" />
+            <span>Ventre Droit</span>
+            <span class="zone-icon">▶</span>
+          </label>
         </div>
       </div>
 
@@ -610,6 +650,21 @@ body::before {
         <input type="number" id="edit-dose" class="dose-val" value="28" min="1" max="200" inputmode="numeric" />
         <span class="dose-unit">unités</span>
         <button class="dose-btn" id="edit-dose-plus">+</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">Zone d'injection</label>
+      <div class="zone-selector">
+        <label class="zone-option" id="edit-zone-left-label">
+          <input type="checkbox" id="edit-zone-left" value="gauche" />
+          <span class="zone-icon">◀</span>
+          <span>Ventre Gauche</span>
+        </label>
+        <label class="zone-option" id="edit-zone-right-label">
+          <input type="checkbox" id="edit-zone-right" value="droit" />
+          <span>Ventre Droit</span>
+          <span class="zone-icon">▶</span>
+        </label>
       </div>
     </div>
     <div class="input-group">
@@ -799,11 +854,26 @@ function switchView(name) {
   if (name === 'today')    renderToday();
 }
 
+// ---- Live clock in status card ----
+function updateClock() {
+  const el = $('status-card-clock');
+  if (el) el.textContent = nowTime();
+}
+
 // ---- Render: TODAY ----
 function renderToday() {
-  const t  = today();
+  const t   = today();
   const inj = S.injections[t];
   const now = nowTime();
+
+  // Date + live time in header
+  const dateEl = $('status-card-date');
+  if (dateEl) {
+    const d = new Date();
+    dateEl.textContent = d.toLocaleDateString('fr-FR', {weekday:'long',day:'numeric',month:'long'})
+      .replace(/^\w/, c => c.toUpperCase());
+  }
+  updateClock();
 
   // Late alert
   const late = $('late-alert');
@@ -821,13 +891,16 @@ function renderToday() {
     dot.className   = 'dot done';
     title.textContent = '✓ Injection faite';
     let html = `<span class="sbadge">🕐 ${inj.time}</span><span class="sbadge">💉 ${inj.dose} unités</span>`;
+    if (inj.zone) html += `<span class="sbadge">📍 Ventre ${inj.zone}</span>`;
     if (inj.comment) html += `<div class="status-comment">"${escHtml(inj.comment)}"</div>`;
     detail.innerHTML = html;
 
     $('validate-btn-text').textContent = '✎ Modifier l\'injection';
     $('validate-btn').style.background = 'linear-gradient(135deg,#4da3ff 0%,#7b61ff 100%)';
-    $('dose-input').value   = inj.dose;
-    $('comment-input').value= inj.comment || '';
+    $('dose-input').value    = inj.dose;
+    $('comment-input').value = inj.comment || '';
+    // Restore zone checkboxes
+    setZone('zone-left-label','zone-left','zone-right-label','zone-right', inj.zone||'');
   } else {
     card.className  = 'card status-card pending';
     dot.className   = 'dot pending';
@@ -836,8 +909,9 @@ function renderToday() {
 
     $('validate-btn-text').textContent = '💉 Valider l\'injection';
     $('validate-btn').style.background = '';
-    $('dose-input').value   = S.settings.defaultDose;
-    $('comment-input').value= '';
+    $('dose-input').value    = S.settings.defaultDose;
+    $('comment-input').value = '';
+    setZone('zone-left-label','zone-left','zone-right-label','zone-right','');
   }
 
   $('target-time-display').textContent = S.settings.targetTime;
@@ -852,7 +926,8 @@ function renderToday() {
     yBadge.className = 'ybadge done';
     yBadge.textContent = '✓ Faite';
     let yhtml = `<span class="pill">🕐 ${yInj.time}</span><span class="pill">💉 ${yInj.dose} u</span>`;
-    if (yInj.comment) yhtml += `<span style="color:var(--t3);font-style:italic">"${escHtml(yInj.comment)}"</span>`;
+    if (yInj.zone) yhtml += `<span class="pill">📍 Ventre ${yInj.zone}</span>`;
+    if (yInj.comment) yhtml += `<span style="color:var(--t3);font-style:italic;font-size:0.78rem">"${escHtml(yInj.comment)}"</span>`;
     yDetail.innerHTML = yhtml;
   } else {
     yBadge.className = 'ybadge pending';
@@ -861,12 +936,30 @@ function renderToday() {
   }
 }
 
+// ---- Zone helper ----
+function setZone(lblL, idL, lblR, idR, val) {
+  const elL = $(idL), elR = $(idR);
+  const lblElL = $(lblL), lblElR = $(lblR);
+  if (!elL||!elR) return;
+  elL.checked = (val === 'gauche');
+  elR.checked = (val === 'droit');
+  if (lblElL) lblElL.classList.toggle('selected', val === 'gauche');
+  if (lblElR) lblElR.classList.toggle('selected', val === 'droit');
+}
+
+function getZone(idL, idR) {
+  if ($(idL) && $(idL).checked) return 'gauche';
+  if ($(idR) && $(idR).checked) return 'droit';
+  return '';
+}
+
 // ---- Save injection (today) ----
 function saveInjection(confirmed=false) {
   const t   = today();
   const old = S.injections[t];
   const dose= parseInt($('dose-input').value, 10);
   const cmt = $('comment-input').value.trim();
+  const zone= getZone('zone-left','zone-right');
 
   if (isNaN(dose) || dose < 1 || dose > 200) { toast('Dose invalide (1–200 u)','err'); return; }
 
@@ -882,12 +975,13 @@ function saveInjection(confirmed=false) {
   const now = nowTime();
   if (old) {
     const mods = old.modifications || [];
-    if (old.dose !== dose)           mods.push({type:'dose',   date:t, time:now, oldVal:old.dose,    newVal:dose});
-    if ((old.comment||'') !== cmt)   mods.push({type:'comment',date:t, time:now, oldVal:old.comment||'', newVal:cmt});
-    S.injections[t] = { ...old, dose, comment:cmt, modifications:mods, lastModified:now };
+    if (old.dose !== dose)              mods.push({type:'dose',    date:t, time:now, oldVal:old.dose,        newVal:dose});
+    if ((old.comment||'') !== cmt)      mods.push({type:'comment', date:t, time:now, oldVal:old.comment||'', newVal:cmt});
+    if ((old.zone||'') !== zone)        mods.push({type:'zone',    date:t, time:now, oldVal:old.zone||'',    newVal:zone});
+    S.injections[t] = { ...old, dose, comment:cmt, zone, modifications:mods, lastModified:now };
     toast('Injection modifiée ✓','info');
   } else {
-    S.injections[t] = { date:t, time:now, dose, comment:cmt, modifications:[] };
+    S.injections[t] = { date:t, time:now, dose, comment:cmt, zone, modifications:[] };
     toast('Injection enregistrée ✓','ok');
     flashGreen();
     vibe([50,30,50]);
@@ -931,14 +1025,19 @@ function renderHistory() {
       const mods = inj.modifications || [];
       let modHtml = '';
       if (mods.length) {
-        const entries = mods.map(m =>
-          m.type === 'dose'
-            ? `${m.date.split('-').reverse().join('/')} ${m.time} · Dose : ${m.oldVal} → ${m.newVal} u`
-            : `${m.date.split('-').reverse().join('/')} ${m.time} · Commentaire modifié`
-        ).join('<br>');
+        const entries = mods.map(m => {
+          const dt = `${m.date.split('-').reverse().join('/')} ${m.time}`;
+          if (m.type === 'dose')    return `${dt} · Dose : ${m.oldVal} → ${m.newVal} u`;
+          if (m.type === 'zone')    return `${dt} · Zone : ${m.oldVal||'—'} → ${m.newVal||'—'}`;
+          return `${dt} · Commentaire modifié`;
+        }).join('<br>');
         modHtml = `<div class="mod-log"><div class="mod-log-title">✎ Modifications</div><div class="mod-log-body">${entries}</div></div>`;
       }
-      const cmtHtml = inj.comment ? `<div class="hist-comment">"${escHtml(inj.comment)}"</div>` : '';
+
+      const zoneHtml = inj.zone
+        ? `<span class="pill">📍 Ventre ${inj.zone}</span>` : '';
+      const cmtHtml = inj.comment
+        ? `<div class="hist-comment">"${escHtml(inj.comment)}"</div>` : '';
 
       group.innerHTML = `
         <div class="hist-date">${label}</div>
@@ -950,6 +1049,7 @@ function renderHistory() {
           <div class="hist-pills">
             <span class="pill">🕐 ${inj.time}</span>
             <span class="pill">💉 ${inj.dose} u</span>
+            ${zoneHtml}
             ${inj.lastModified ? `<span class="pill" style="color:var(--t3);font-size:.7rem">modifié ${inj.lastModified}</span>` : ''}
           </div>
           ${cmtHtml}${modHtml}
@@ -969,10 +1069,11 @@ function renderHistory() {
 function openEditModal(dateStr) {
   const inj = S.injections[dateStr]; if (!inj) return;
   S.editingDate = dateStr;
-  $('edit-title').textContent = `Modifier — ${fmtDateShort(dateStr)}`;
-  $('edit-sub').textContent   = `Enregistrée à ${inj.time}`;
-  $('edit-dose').value        = inj.dose;
-  $('edit-comment').value     = inj.comment || '';
+  $('edit-title').textContent   = `Modifier — ${fmtDateShort(dateStr)}`;
+  $('edit-sub').textContent     = `Enregistrée à ${inj.time}`;
+  $('edit-dose').value          = inj.dose;
+  $('edit-comment').value       = inj.comment || '';
+  setZone('edit-zone-left-label','edit-zone-left','edit-zone-right-label','edit-zone-right', inj.zone||'');
   openModal('edit-modal');
 }
 
@@ -981,15 +1082,17 @@ function saveEdit() {
   const old = S.injections[d]; if (!old) return;
   const dose= parseInt($('edit-dose').value, 10);
   const cmt = $('edit-comment').value.trim();
+  const zone= getZone('edit-zone-left','edit-zone-right');
 
   if (isNaN(dose) || dose < 1 || dose > 200) { toast('Dose invalide','err'); return; }
 
   const now  = nowTime();
   const mods = old.modifications || [];
-  if (old.dose !== dose)           mods.push({type:'dose',   date:today(), time:now, oldVal:old.dose,        newVal:dose});
-  if ((old.comment||'') !== cmt)   mods.push({type:'comment',date:today(), time:now, oldVal:old.comment||'', newVal:cmt});
+  if (old.dose !== dose)              mods.push({type:'dose',    date:today(), time:now, oldVal:old.dose,        newVal:dose});
+  if ((old.comment||'') !== cmt)      mods.push({type:'comment', date:today(), time:now, oldVal:old.comment||'', newVal:cmt});
+  if ((old.zone||'') !== zone)        mods.push({type:'zone',    date:today(), time:now, oldVal:old.zone||'',    newVal:zone});
 
-  S.injections[d] = { ...old, dose, comment:cmt, modifications:mods, lastModified:now };
+  S.injections[d] = { ...old, dose, comment:cmt, zone, modifications:mods, lastModified:now };
   saveInj();
   closeModal('edit-modal');
   toast('Modification enregistrée ✓','info');
@@ -1088,6 +1191,23 @@ function init() {
   $$('.modal-overlay').forEach(o => {
     o.addEventListener('click', e => { if (e.target === o) closeModal(o.id); });
   });
+
+  // Zone selectors — exclusive toggle (like radio buttons)
+  function wireZone(idL, lblL, idR, lblR) {
+    $(idL).addEventListener('change', () => {
+      if ($(idL).checked) { $(idR).checked = false; $(lblR).classList.remove('selected'); }
+      $(lblL).classList.toggle('selected', $(idL).checked);
+    });
+    $(idR).addEventListener('change', () => {
+      if ($(idR).checked) { $(idL).checked = false; $(lblL).classList.remove('selected'); }
+      $(lblR).classList.toggle('selected', $(idR).checked);
+    });
+  }
+  wireZone('zone-left','zone-left-label','zone-right','zone-right-label');
+  wireZone('edit-zone-left','edit-zone-left-label','edit-zone-right','edit-zone-right-label');
+
+  // Live clock — update every 30s
+  setInterval(updateClock, 30000);
 
   // Late alert check every minute
   setInterval(() => { if (document.getElementById('view-today').classList.contains('active')) renderToday(); }, 60000);
